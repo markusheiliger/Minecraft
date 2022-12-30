@@ -62,15 +62,19 @@ if [ -e $MINECRAFT_DIR/bedrock_server ]; then
   sudo -n chmod +x $MINECRAFT_DIR/bedrock_server
 fi
 
-# patching server configuration
-sudo sed -i "/level-name=/c\level-name=$WORLDNAME" $MINECRAFT_DIR/server.properties
-sudo sed -i "/level-seed=/c\level-seed=$WORLDSEED" $MINECRAFT_DIR/server.properties
-sudo sed -i "/gamemode=/c\gamemode=$WORLDMODE" $MINECRAFT_DIR/server.properties
-sudo sed -i "/difficulty=/c\difficulty=$WORLDDIFFICULTY" $MINECRAFT_DIR/server.properties
-
-sudo sed -i "/online-mode=/c\online-mode=true" $MINECRAFT_DIR/server.properties
-sudo sed -i "/allow-list=/c\allow-list=true" $MINECRAFT_DIR/server.properties
-sudo sed -i "/allow-cheats=/c\allow-cheats=false" $MINECRAFT_DIR/server.properties
+if [ -e $MINECRAFT_DIR/server.properties ]; then
+  # create a server configuration backup copy
+  sudo cp $MINECRAFT_DIR/server.properties $MINECRAFT_DIR/server.properties.backup
+  # patching server configuration with argument values
+  sudo sed -i "/level-name=/c\level-name=$WORLDNAME" $MINECRAFT_DIR/server.properties
+  sudo sed -i "/level-seed=/c\level-seed=$WORLDSEED" $MINECRAFT_DIR/server.properties
+  sudo sed -i "/gamemode=/c\gamemode=$WORLDMODE" $MINECRAFT_DIR/server.properties
+  sudo sed -i "/difficulty=/c\difficulty=$WORLDDIFFICULTY" $MINECRAFT_DIR/server.properties
+  # patching server configuration with enforced values
+  sudo sed -i "/online-mode=/c\online-mode=true" $MINECRAFT_DIR/server.properties
+  sudo sed -i "/allow-list=/c\allow-list=true" $MINECRAFT_DIR/server.properties
+  sudo sed -i "/allow-cheats=/c\allow-cheats=false" $MINECRAFT_DIR/server.properties
+fi
 
 # open minecraft firewall port
 sudo ufw allow 19132 # IPv4
