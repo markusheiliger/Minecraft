@@ -22,10 +22,10 @@ while getopts 'n:s:m:d:' OPT; do
 done
 
 # update catalog and upgrade packages
-sudo apt update && sudo apt upgrade -y
+sudo apt-get update && sudo apt-get upgrade -y
 
 # install packages required by minecraft 
-sudo apt install coreutils curl wget unzip grep screen openssl -y
+sudo apt-get install coreutils curl wget unzip grep screen openssl -y
 
 # initialize minecraft variables
 MINECRAFT_USR=$(whoami)

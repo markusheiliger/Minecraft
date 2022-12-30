@@ -196,7 +196,7 @@ resource vmInit 'Microsoft.Compute/virtualMachines/extensions@2022-08-01' = {
       fileUris: [
         'https://raw.githubusercontent.com/markusheiliger/minecraft/main/resources/scripts/minecraft.sh'
       ]
-      commandToExecute: 'minecraft.sh -s ${WorldSeed} -m ${WorldMode} -d ${WorldDifficulty}'
+      commandToExecute: './minecraft.sh -s ${WorldSeed} -m ${WorldMode} -d ${WorldDifficulty}'
     }
 
   }
