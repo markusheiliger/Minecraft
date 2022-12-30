@@ -13,6 +13,12 @@ param AdminPassword string
 
 param WorldSeed string = ''
 
+@allowed(['survival', 'creative', 'adventure'])
+param WorldMode string = 'survival'
+
+@allowed(['peaceful', 'easy', 'normal', 'hard'])
+param WorldDifficulty string = 'easy'
+
 // =====================================================
 
 var ResourcePrefix = 'minecraft${uniqueString(resourceGroup().id, ServerName)}'
@@ -187,9 +193,12 @@ resource vmInit 'Microsoft.Compute/virtualMachines/extensions@2022-08-01' = {
     typeHandlerVersion: '2.1'
     autoUpgradeMinorVersion: true
     settings: {
-      skipDos2Unix: false
-      script: loadFileAsBase64('scripts/minecraft.sh')
+      fileUris: [
+        'https://raw.githubusercontent.com/markusheiliger/minecraft/main/resources/scripts/minecraft.sh'
+      ]
+      commandToExecute: 'minecraft.sh -s ${WorldSeed} -m ${WorldMode} -d ${WorldDifficulty}'
     }
+
   }
 }
 

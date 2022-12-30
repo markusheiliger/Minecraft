@@ -3,6 +3,24 @@
 # installing minecraft bedrock server following guidelines
 # documented here https://pimylifeup.com/ubuntu-minecraft-bedrock-server/
 
+WORLDNAME=$(hostname)
+WORLDSEED='' # no seed by default
+WORLDMODE='survival'
+WORLDDIFFICULTY='easy'
+
+while getopts 'n:s:m:d:' OPT; do
+    case "$OPT" in
+      n)
+        WORLDNAME="${OPTARG}" ;;
+      s)
+        WORLDSEED="${OPTARG}" ;;
+      m)
+        WORLDMODE="${OPTARG}" ;;
+      d)
+        WORLDDIFFICULTY="${OPTARG}" ;;
+    esac
+done
+
 # update catalog and upgrade packages
 sudo apt update && sudo apt upgrade -y
 
@@ -45,7 +63,14 @@ if [ -e $MINECRAFT_DIR/bedrock_server ]; then
 fi
 
 # patching server configuration
-sudo sed -i "/level-seed=/c\level-seed=$PortIPV4" $MINECRAFT_DIR/server.properties
+sudo sed -i "/level-name=/c\level-name=$WORLDNAME" $MINECRAFT_DIR/server.properties
+sudo sed -i "/level-seed=/c\level-seed=$WORLDSEED" $MINECRAFT_DIR/server.properties
+sudo sed -i "/gamemode=/c\gamemode=$WORLDMODE" $MINECRAFT_DIR/server.properties
+sudo sed -i "/difficulty=/c\difficulty=$WORLDDIFFICULTY" $MINECRAFT_DIR/server.properties
+
+sudo sed -i "/online-mode=/c\online-mode=true" $MINECRAFT_DIR/server.properties
+sudo sed -i "/allow-list=/c\allow-list=true" $MINECRAFT_DIR/server.properties
+sudo sed -i "/allow-cheats=/c\allow-cheats=false" $MINECRAFT_DIR/server.properties
 
 # open minecraft firewall port
 sudo ufw allow 19132 # IPv4
