@@ -1,13 +1,16 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.24.24.22086",
+      "templateHash": "10836439402780976890"
+    }
+  },
   "parameters": {
     "ServerName": {
       "type": "string"
-    },
-    "ServerLocation": {
-      "type": "string",
-      "defaultValue": "[resourceGroup().location]"
     },
     "AdminUsername": {
       "type": "string",
@@ -41,6 +44,7 @@
     }
   },
   "variables": {
+    "ResourceLocation": "[resourceGroup().location]",
     "ResourcePrefix": "[format('minecraft{0}', uniqueString(resourceGroup().id, parameters('ServerName')))]"
   },
   "resources": [
@@ -48,7 +52,7 @@
       "type": "Microsoft.Network/networkInterfaces",
       "apiVersion": "2021-05-01",
       "name": "[format('{0}-NIC', variables('ResourcePrefix'))]",
-      "location": "[parameters('ServerLocation')]",
+      "location": "[variables('ResourceLocation')]",
       "properties": {
         "ipConfigurations": [
           {
@@ -78,7 +82,7 @@
       "type": "Microsoft.Network/networkSecurityGroups",
       "apiVersion": "2021-05-01",
       "name": "[format('{0}-NSG', variables('ResourcePrefix'))]",
-      "location": "[parameters('ServerLocation')]",
+      "location": "[variables('ResourceLocation')]",
       "properties": {
         "securityRules": [
           {
@@ -140,7 +144,7 @@
       "type": "Microsoft.Network/virtualNetworks",
       "apiVersion": "2021-05-01",
       "name": "[format('{0}-VNET', variables('ResourcePrefix'))]",
-      "location": "[parameters('ServerLocation')]",
+      "location": "[variables('ResourceLocation')]",
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -166,7 +170,7 @@
       "type": "Microsoft.Network/publicIPAddresses",
       "apiVersion": "2021-05-01",
       "name": "[format('{0}-PIP', variables('ResourcePrefix'))]",
-      "location": "[parameters('ServerLocation')]",
+      "location": "[variables('ResourceLocation')]",
       "sku": {
         "name": "Basic"
       },
@@ -183,7 +187,7 @@
       "type": "Microsoft.Compute/virtualMachines",
       "apiVersion": "2021-11-01",
       "name": "[format('{0}-VM', variables('ResourcePrefix'))]",
-      "location": "[parameters('ServerLocation')]",
+      "location": "[variables('ResourceLocation')]",
       "properties": {
         "hardwareProfile": {
           "vmSize": "Standard_B2s"
@@ -223,7 +227,7 @@
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "apiVersion": "2022-08-01",
       "name": "[format('{0}/{1}', format('{0}-VM', variables('ResourcePrefix')), 'Init')]",
-      "location": "[parameters('ServerLocation')]",
+      "location": "[variables('ResourceLocation')]",
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",
         "type": "CustomScript",

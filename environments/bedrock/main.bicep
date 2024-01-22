@@ -4,8 +4,6 @@ targetScope = 'resourceGroup'
 
 param ServerName string 
 
-param ServerLocation string = resourceGroup().location
-
 param AdminUsername string = 'godfather'
 
 @secure()
@@ -21,13 +19,16 @@ param WorldDifficulty string = 'easy'
 
 // =====================================================
 
+#disable-next-line no-loc-expr-outside-params
+var ResourceLocation = resourceGroup().location
+
 var ResourcePrefix = 'minecraft${uniqueString(resourceGroup().id, ServerName)}'
 
 // =====================================================
 
 resource nic 'Microsoft.Network/networkInterfaces@2021-05-01' = {
   name: '${ResourcePrefix}-NIC'
-  location: ServerLocation
+  location: ResourceLocation
   properties: {
     ipConfigurations: [
       {
@@ -51,7 +52,7 @@ resource nic 'Microsoft.Network/networkInterfaces@2021-05-01' = {
 
 resource nsg 'Microsoft.Network/networkSecurityGroups@2021-05-01' = {
   name: '${ResourcePrefix}-NSG'
-  location: ServerLocation
+  location: ResourceLocation
   properties: {
     securityRules: [
       {
@@ -111,7 +112,7 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@2021-05-01' = {
 
 resource vnet 'Microsoft.Network/virtualNetworks@2021-05-01' = {
   name: '${ResourcePrefix}-VNET'
-  location: ServerLocation
+  location: ResourceLocation
   properties: {
     addressSpace: {
       addressPrefixes: [
@@ -133,7 +134,7 @@ resource subnet 'Microsoft.Network/virtualNetworks/subnets@2021-05-01' = {
 
 resource publicIP 'Microsoft.Network/publicIPAddresses@2021-05-01' = {
   name: '${ResourcePrefix}-PIP'
-  location: ServerLocation
+  location: ResourceLocation
   sku: {
     name: 'Basic'
   }
@@ -149,7 +150,7 @@ resource publicIP 'Microsoft.Network/publicIPAddresses@2021-05-01' = {
 
 resource vm 'Microsoft.Compute/virtualMachines@2021-11-01' = {
   name: '${ResourcePrefix}-VM'
-  location: ServerLocation
+  location: ResourceLocation
   properties: {
     hardwareProfile: {
       vmSize: 'Standard_B2s'
@@ -185,7 +186,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2021-11-01' = {
 
 resource vmInit 'Microsoft.Compute/virtualMachines/extensions@2022-08-01' = {
   name: 'Init'
-  location: ServerLocation
+  location: ResourceLocation
   parent: vm
   properties: {
     publisher: 'Microsoft.Azure.Extensions'
