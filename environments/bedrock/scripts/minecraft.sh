@@ -25,7 +25,7 @@ done
 sudo apt-get update && sudo apt-get upgrade -y
 
 # install packages required by minecraft 
-sudo apt-get install coreutils curl wget unzip grep screen openssl -y
+sudo apt-get install coreutils curl wget unzip grep screen openssl jq -y
 
 # initialize minecraft variables
 MINECRAFT_USR=$(whoami)
@@ -43,6 +43,8 @@ DOWNLOAD_URL=$(curl -H "Accept-Encoding: identity" -H "Accept-Language: en" -s -
 sudo wget $DOWNLOAD_URL -O $MINECRAFT_DIR/bedrock-server.zip && sudo unzip $MINECRAFT_DIR/bedrock-server.zip -d $MINECRAFT_DIR/
 
 tee $MINECRAFT_DIR/start.sh <<EOF
+
+jq -n --arg users "\$MINECRAFT_WHITELIST" '\$users | split(",") | map({"name": .})' | sudo tee $MINECRAFT_DIR/allowlist.json $MINECRAFT_DIR/whitelist.json
 
 sudo screen -L -Logfile $MINECRAFT_LOG/minecraft.\$(date +%Y.%m.%d.%H.%M.%S).log -dmS minecraft /bin/bash -c "LD_LIBRARY_PATH=$MINECRAFT_DIR $MINECRAFT_DIR/bedrock_server"
 
@@ -63,17 +65,21 @@ if [ -e $MINECRAFT_DIR/bedrock_server ]; then
 fi
 
 if [ -e $MINECRAFT_DIR/server.properties ]; then
+
   # create a server configuration backup copy
   sudo cp $MINECRAFT_DIR/server.properties $MINECRAFT_DIR/server.properties.backup
+
   # patching server configuration with argument values
   sudo sed -i "/^level-name=/c\level-name=$WORLDNAME" $MINECRAFT_DIR/server.properties
   sudo sed -i "/^level-seed=/c\level-seed=$WORLDSEED" $MINECRAFT_DIR/server.properties
   sudo sed -i "/^gamemode=/c\gamemode=$WORLDMODE" $MINECRAFT_DIR/server.properties
   sudo sed -i "/^difficulty=/c\difficulty=$WORLDDIFFICULTY" $MINECRAFT_DIR/server.properties
+
   # patching server configuration with enforced values
   sudo sed -i "/^online-mode=/c\online-mode=true" $MINECRAFT_DIR/server.properties
   sudo sed -i "/^allow-list=/c\allow-list=true" $MINECRAFT_DIR/server.properties
   sudo sed -i "/^allow-cheats=/c\allow-cheats=false" $MINECRAFT_DIR/server.properties
+
 fi
 
 # open minecraft firewall port

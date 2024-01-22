@@ -194,7 +194,7 @@ resource vmInit 'Microsoft.Compute/virtualMachines/extensions@2022-08-01' = {
     autoUpgradeMinorVersion: true
     settings: {
       fileUris: [
-        'https://raw.githubusercontent.com/markusheiliger/minecraft/main/resources/scripts/minecraft.sh'
+        'https://raw.githubusercontent.com/markusheiliger/minecraft/main/environments/bedrock/scripts/minecraft.sh'
       ]
       commandToExecute: './minecraft.sh -s ${WorldSeed} -m ${WorldMode} -d ${WorldDifficulty}'
     }

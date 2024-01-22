@@ -1,0 +1,257 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.24.24.22086",
+      "templateHash": "10356357957390953605"
+    }
+  },
+  "parameters": {
+    "ServerName": {
+      "type": "string"
+    },
+    "ServerLocation": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]"
+    },
+    "AdminUsername": {
+      "type": "string",
+      "defaultValue": "godfather"
+    },
+    "AdminPassword": {
+      "type": "securestring"
+    },
+    "WorldSeed": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "WorldMode": {
+      "type": "string",
+      "defaultValue": "survival",
+      "allowedValues": [
+        "survival",
+        "creative",
+        "adventure"
+      ]
+    },
+    "WorldDifficulty": {
+      "type": "string",
+      "defaultValue": "easy",
+      "allowedValues": [
+        "peaceful",
+        "easy",
+        "normal",
+        "hard"
+      ]
+    }
+  },
+  "variables": {
+    "ResourcePrefix": "[format('minecraft{0}', uniqueString(resourceGroup().id, parameters('ServerName')))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2021-05-01",
+      "name": "[format('{0}-NIC', variables('ResourcePrefix'))]",
+      "location": "[parameters('ServerLocation')]",
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "subnet": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', format('{0}-VNET', variables('ResourcePrefix')), 'default')]"
+              },
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', format('{0}-PIP', variables('ResourcePrefix')))]"
+              }
+            }
+          }
+        ],
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', format('{0}-NSG', variables('ResourcePrefix')))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', format('{0}-NSG', variables('ResourcePrefix')))]",
+        "[resourceId('Microsoft.Network/publicIPAddresses', format('{0}-PIP', variables('ResourcePrefix')))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', format('{0}-VNET', variables('ResourcePrefix')), 'default')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2021-05-01",
+      "name": "[format('{0}-NSG', variables('ResourcePrefix'))]",
+      "location": "[parameters('ServerLocation')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "SSH",
+            "properties": {
+              "priority": 1000,
+              "protocol": "Tcp",
+              "access": "Allow",
+              "direction": "Inbound",
+              "sourceAddressPrefix": "*",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*",
+              "destinationPortRange": "22"
+            }
+          },
+          {
+            "name": "DNSSpoof",
+            "properties": {
+              "priority": 1100,
+              "protocol": "Tcp",
+              "access": "Allow",
+              "direction": "Inbound",
+              "sourceAddressPrefix": "*",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*",
+              "destinationPortRange": "53"
+            }
+          },
+          {
+            "name": "BedrockTCP",
+            "properties": {
+              "priority": 1200,
+              "protocol": "Tcp",
+              "access": "Allow",
+              "direction": "Inbound",
+              "sourceAddressPrefix": "*",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*",
+              "destinationPortRange": "19132"
+            }
+          },
+          {
+            "name": "BedrockUDP",
+            "properties": {
+              "priority": 1300,
+              "protocol": "Udp",
+              "access": "Allow",
+              "direction": "Inbound",
+              "sourceAddressPrefix": "*",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*",
+              "destinationPortRange": "19132"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2021-05-01",
+      "name": "[format('{0}-VNET', variables('ResourcePrefix'))]",
+      "location": "[parameters('ServerLocation')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "192.168.0.0/24"
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "apiVersion": "2021-05-01",
+      "name": "[format('{0}/{1}', format('{0}-VNET', variables('ResourcePrefix')), 'default')]",
+      "properties": {
+        "addressPrefix": "192.168.0.0/24",
+        "privateEndpointNetworkPolicies": "Enabled",
+        "privateLinkServiceNetworkPolicies": "Enabled"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', format('{0}-VNET', variables('ResourcePrefix')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2021-05-01",
+      "name": "[format('{0}-PIP', variables('ResourcePrefix'))]",
+      "location": "[parameters('ServerLocation')]",
+      "sku": {
+        "name": "Basic"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "static",
+        "publicIPAddressVersion": "IPv4",
+        "dnsSettings": {
+          "domainNameLabel": "[toLower(variables('ResourcePrefix'))]"
+        },
+        "idleTimeoutInMinutes": 4
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2021-11-01",
+      "name": "[format('{0}-VM', variables('ResourcePrefix'))]",
+      "location": "[parameters('ServerLocation')]",
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "Standard_B2s"
+        },
+        "storageProfile": {
+          "osDisk": {
+            "createOption": "FromImage",
+            "managedDisk": {
+              "storageAccountType": "Premium_LRS"
+            }
+          },
+          "imageReference": {
+            "publisher": "Canonical",
+            "offer": "0001-com-ubuntu-minimal-jammy",
+            "sku": "minimal-22_04-lts",
+            "version": "latest"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', format('{0}-NIC', variables('ResourcePrefix')))]"
+            }
+          ]
+        },
+        "osProfile": {
+          "computerName": "[parameters('ServerName')]",
+          "adminUsername": "[parameters('AdminUsername')]",
+          "adminPassword": "[parameters('AdminPassword')]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces', format('{0}-NIC', variables('ResourcePrefix')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "apiVersion": "2022-08-01",
+      "name": "[format('{0}/{1}', format('{0}-VM', variables('ResourcePrefix')), 'Init')]",
+      "location": "[parameters('ServerLocation')]",
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.1",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "https://raw.githubusercontent.com/markusheiliger/minecraft/main/environments/bedrock/scripts/minecraft.sh"
+          ],
+          "commandToExecute": "[format('./minecraft.sh -s {0} -m {1} -d {2}', parameters('WorldSeed'), parameters('WorldMode'), parameters('WorldDifficulty'))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines', format('{0}-VM', variables('ResourcePrefix')))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "SSHCommand": {
+      "type": "string",
+      "value": "[format('ssh {0}@{1}', parameters('AdminUsername'), reference(resourceId('Microsoft.Network/publicIPAddresses', format('{0}-PIP', variables('ResourcePrefix'))), '2021-05-01').ipAddress)]"
+    }
+  }
+}
